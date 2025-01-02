@@ -8,6 +8,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Cast from '../components/cast';
 import MovieList from '../components/movieList';
 import Loading from '../components/loading';
+import { fetchMovieDetail, fetchTrailerKey, image500, movieDetail } from '../api/moviedb';
+import Trailer from '../components/trailer';
 
 var {width, height} = Dimensions.get('window')
 const ios = Platform.OS == 'ios';
@@ -21,12 +23,39 @@ const MovieScreen = () => {
     const [cast, setCast] = useState([1, 2, 3, 4, 5]);
     const [similarMovies, setSimilarMovies] = useState([1, 2, 3, 4, 5]);
     
+    const [details, setDetails] = useState({});
+    const [videoUrl, setVideoUrl] = useState('');
+    
     const [isFavorite, setIsFavorite] = useState(false);
-    const [isLoading, setIsLoading] = useState(false)
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        //call the movie details api
+        // console.log(item.id)
+        getMovieDetail(item.id)
+        getTrailerKey(item.id)
     }, [item]);
+
+    const getMovieDetail = async(id) => {
+        const data = await fetchMovieDetail(id);
+        console.log('got movie detail: ', item.id, ': ', data)
+        if(data) setDetails(data) 
+        setIsLoading(false)
+    }
+
+    const getTrailerKey = async(id) => {
+        const data = await fetchTrailerKey(id);
+        console.log('got trailer key: ', data.results)
+        
+        const trailerData = data.results.find(
+            (video) => video.type === 'Trailer' && video.site === 'YouTube'
+        )
+        // console.log(data.results)
+
+        if(trailerData) {
+            setVideoUrl(`https://www.youtube.com/embed/${trailerData.key}`)
+        }
+    }
+
     return (
         <ScrollView
             contentContainerStyle={{paddingBottom: 20}}
@@ -52,7 +81,7 @@ const MovieScreen = () => {
 
                         <View>
                             <Image 
-                                source={require('../assets/wicked.jpg')}
+                                source={{ uri: image500(details.poster_path) }}
                                 style={{width, height: height * 0.55}}
                             />
                             <LinearGradient
@@ -68,37 +97,40 @@ const MovieScreen = () => {
                     {/* movie details */}
                     <View style={{marginTop: -(height * 0.09)}} className="gap-3">
                         {/* title */}
-                        <Text className="text-white font-ibold text-center text-5xl tracking-wider">{movieName}</Text>
+                        <Text className="text-white font-ibold text-center text-5xl tracking-wider">{details.title}</Text>
 
                         {/* description */}
                         <Text className="text-neutral-400 font-isemibold text-base text-center">
-                            Released • 2024 • 160 mins
+                            Released • {details.release_date.substring(0, 4)} • {details.runtime} mins
                         </Text>
 
                         {/* genres */}
                         <View className="flex-row justify-center mx-4 gap-2">
-                            <Text className="text-neutral-400 font-isemibold text-base text-center">
-                                Action •
-                            </Text>
-                            <Text className="text-neutral-400 font-isemibold text-base text-center">
-                                Comedy •
-                            </Text>
-                            <Text className="text-neutral-400 font-isemibold text-base text-center">
-                                Musical 
-                            </Text>
+                            {
+                                details.genres.map((genre, index) => {
+                                    return (
+                                        <Text key={index} className="text-neutral-400 font-isemibold text-base text-center">
+                                            {genre.name} {index !== details.genres.length - 1 ? ' •' : ''}
+                                        </Text>
+                                    )
+                                })
+                            }
                         </View>
 
                         {/* description */}
                         <Text className="text-neutral-400 mx-4 tracking-wider font-iregular">
-                        The movie is set in the Land of Oz before Dorothy Gale's arrival from Kansas. It follows the unlikely friendship between Elphaba, a misunderstood young woman with green skin, and Galinda, a popular young woman. Their friendship is tested after an encounter with the Wonderful Wizard of Oz.
+                        {details.overview}
                         </Text>
                     </View>
 
+                    {/* trailer */}
+                    <Trailer trailer={videoUrl} />
+
                     {/* casts */}
-                    <Cast cast={cast} navigation={navigation}></Cast>
+                    {/* <Cast cast={cast} navigation={navigation}></Cast> */}
 
                     {/* similar movies */}
-                    <MovieList title={"Similar Movies"}  hideSeeAll={true} data={similarMovies}/>
+                    {/* <MovieList title={"Similar Movies"}  hideSeeAll={true} data={similarMovies}/> */}
                     </>
                 )
             }

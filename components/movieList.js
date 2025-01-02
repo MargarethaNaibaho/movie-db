@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView, TouchableWithoutFeedback, Dimensions, Image } from 'react-native'
 import React from 'react'
 import { useNavigation } from '@react-navigation/native';
-import { image500 } from '../api/moviedb';
+import { fallbackMoviePoster, image500 } from '../api/moviedb';
 
 var {width, height} = Dimensions.get('window')
 
@@ -42,7 +42,7 @@ export default function MovieList({title, data, hideSeeAll}) {
               >
                 <View className="gap-1 mr-4">
                   <Image
-                    source={{ uri: image500(item.poster_path) }}
+                    source={{ uri: image500(item.poster_path) || fallbackMoviePoster}}
                     className="rounded-3xl"
                     style={{
                       width: width * 0.33,
@@ -51,7 +51,7 @@ export default function MovieList({title, data, hideSeeAll}) {
                   />
                   <Text className="text-neutral-300 ml-1 text-lg font-ibold">
                     {
-                      item.original_title.length > 14  ? item.original_title.slice(0, 14) + '...' : item.original_title
+                      item.title.length > 14  ? item.title.slice(0, 14) + '...' : item.original_title
                     }
                   </Text>
                 </View>
